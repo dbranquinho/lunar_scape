@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lunar Scape - Laboratório</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Estilos */
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #map-row {
+            display: flex;
+            width: 100%;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        #map-image-container {
+            width: 30%;
+            text-align: center;
+        }
+
+        #map-image {
+            max-width: 100%;
+            height: auto;
+        }
+
+        #matrix-container {
+            display: grid;
+            grid-template-columns: repeat(10, 10px); /* Matriz 10x10 */
+            width: 100px;
+            height: 100px;
+        }
+
+        .matrix-cell {
+            width: 10px;
+            height: 10px;
+            border: 1px solid #333;
+        }
+
+        .player-position {
+            background-color: red !important; /* Sobrescreve a cor cinza claro */
+            z-index: 2; /* Garante que fique na frente das outras cores */
+        }
+
+        .valid-position {
+            background-color: lightgray; /* Coordenadas válidas */
+            z-index: 1; /* Garante que as áreas válidas fiquem atrás */
+        }
+
+        .exit-position {
+            background-color: yellow !important;
+            z-index: 0;
+        }
+
+        #coordinates-container {
+            width: 30%;
+            text-align: center;
+            display: flex;
+            flex-direction: column; /* Alinha elementos verticalmente */
+            justify-content: center;
+            align-items: center;
+        }
+
+        #bagagem-list {
+            list-style: none; /* Remove marcadores de lista */
+            padding: 0;
+        }
+
+        #controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .control-row button {
+            margin: 0 10px;
+            padding: 8px 16px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        #status {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #death-popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            text-align: center;
+            color: white;
+        }
+
+        #death-popup-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #death-image {
+            max-width: 80%;
+            max-height: 60%;
+        }
+
+        #drop-popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1001;
+            text-align: center;
+            color: white;
+        }
+
+        #drop-popup-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #333;
+            padding: 20px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Lunar Scape - Laboratório</h1>
+
+    <div id="game-container">
+        <div id="map-row">
+            <div id="map-image-container">
+                <img id="map-image" src="" alt="Mapa">
+            </div>
+            <div id="matrix-container">
+                <!-- A matriz será preenchida com JavaScript -->
+            </div>
+            <div id="coordinates-container">
+                <p id="coordinates">Coordenadas (x, y)</p>
+                <h3>Bagagem:</h3>
+                <ul id="bagagem-list"></ul>
+            </div>
+        </div>
+
+        <div id="controls">
+            <div class="control-row">
+                <div></div>
+                <button id="north-button" onclick="movePlayer('north')">Norte</button>
+                <div></div>
+            </div>
+            <div class="control-row">
+                <button id="west-button" onclick="movePlayer('west')">Oeste</button>
+                <div></div>
+                <button id="east-button" onclick="movePlayer('east')">Leste</button>
+            </div>
+            <div class="control-row">
+                <button id="pick-button" onclick="pegarItem()">Pegar Item</button>
+                <button id="south-button" onclick="movePlayer('south')">Sul</button>
+                <button id="drop-button" id="drop-item-button" onclick="showDropPopup()">Largar Item</button>
+            </div>
+        </div>
+
+        <div id="status">
+            <p>Oxigênio: <span id="ox-level">100%</span></p>
+            <p>Energia: <span id="power-level">100%</span></p>
+        </div>
+    </div>
+
+    <!-- Pop-up de Morte -->
+    <div id="death-popup">
+        <div id="death-popup-content">
+            <h2>Você Morreu!</h2>
+            <img id="death-image" src="images/dead.jpeg" alt="Você Morreu">
+            <p>Seus recursos se esgotaram.</p>
+        </div>
+    </div>
+
+    <!-- Pop-up de Descarte -->
+    <div id="drop-popup">
+        <div id="drop-popup-content">
+            <h2>Qual item deseja descartar?</h2>
+            <select id="drop-item-select"></select>
+            <button id="drop-confirm-button" onclick="dropItem()">OK</button>
+            <button id="drop-cancel-button" onclick="closeDropPopup()">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        // Variáveis Globais
+        let ox = 100;
+        let power = 100;
+        let position_x = 1; //linha
+        let position_y = 1; //coluna
+        const matrixSize = 10;
+        let matrix = [];
+        let bagagem = [];
+        let fromPage = 'scape';
+        let hasItem = false; // Variável para controlar se a célula tem um item
+
+        // Obtém os parâmetros da URL
+        function getUrlParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            ox = parseFloat(urlParams.get('ox')) || 100;
+            power = parseFloat(urlParams.get('power')) || 100;
+            try {
+                bagagem = JSON.parse(urlParams.get('bagagem')) || [];
+            } catch (e) {
+                bagagem = [];
+                console.error("Erro ao analisar a bagagem da URL:", e);
+            }
+            position_x = parseInt(urlParams.get('position_x')) || 1; //linha
+            position_y = parseInt(urlParams.get('position_y')) || 1; //coluna
+            fromPage = urlParams.get('from') || 'scape';
+        }
+
+        // Funções Utilitárias
+        function updateStatus() {
+            document.getElementById('ox-level').textContent = ox.toFixed(1) + '%';
+            document.getElementById('power-level').textContent = power.toFixed(1) + '%';
+        }
+
+        function updateMapImage() {
+            let imagePath = `images/lab_${position_x}x${position_y}.jpeg`; //corrigido
+            const imgElement = document.getElementById('map-image');
+
+            function imageExists(url, callback) {
+                let img = new Image();
+                img.onload = function() { callback(true); };
+                img.onerror = function() { callback(false); };
+                img.src = url;
+            }
+
+            imageExists(imagePath, function(exists) {
+                if (exists) {
+                    imgElement.src = imagePath;
+                } else {
+                    imgElement.src = 'images/lab_1x1.jpeg'; // Imagem padrão
+                }
+            });
+        }
+
+        function updateCoordinates() {
+            document.getElementById('coordinates').textContent = `Coordenadas (${position_x}, ${position_y})`;
+        }
+
+        function updateBagagemDisplay() {
+            const bagagemList = document.getElementById('bagagem-list');
+            bagagemList.innerHTML = '';
+            bagagem.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                bagagemList.appendChild(li);
+            });
+        }
+
+        function createMatrix() {
+            const matrixContainer = document.getElementById('matrix-container');
+            for (let x = 1; x <= matrixSize; x++) { //linha
+                matrix[x] = [];
+                for (let y = 1; y <= matrixSize; y++) { //coluna
+                    const cell = document.createElement('div');
+                    cell.classList.add('matrix-cell');
+                    cell.dataset.x = x; //linha
+                    cell.dataset.y = y; //coluna
+
+                    // Define classes para as posições válidas
+                    if ((x === 1 || x === 5) || (y === 5)) {
+                        cell.classList.add('valid-position');
+                    }
+                    if (x === 1 && y === 1) {
+                        cell.classList.add('exit-position');
+                    }
+
+                    matrixContainer.appendChild(cell);
+                    matrix[x][y] = cell;
+                }
+            }
+        }
+
+        function updateMatrix() {
+            for (let x = 1; x <= matrixSize; x++) {
+                for (let y = 1; y <= matrixSize; y++) {
+                    matrix[x][y].classList.remove('player-position');
+                }
+            }
+            matrix[position_x][position_y].classList.add('player-position');
+        }
+
+        function showDeathPopup() {
+            document.getElementById('death-popup').style.display = 'block';
+            setTimeout(function() {
+                window.location.href = 'index.html';
+            }, 3000);
+        }
+
+       function canMoveTo(x, y) {
+    // Verifica se a nova posição está dentro dos limites da matriz
+    if (x < 1 || x > matrixSize || y < 1 || y > matrixSize) {
+        return false;
+    }
+
+    // Permite o movimento apenas nas linhas 1 e 5 e na coluna 5
+    if ((x !== 1 && x !== 5) && (y !== 5)) {
+        return false;
+    }
+
+    return true;
+}
+
+        function movePlayer(direction) {
+            let new_x = position_x; //linha
+            let new_y = position_y; //coluna
+
+            switch (direction) {
+                case 'north':
+                    if (position_y !=5) break
+                    new_x = 1
+                    break;
+                case 'south':
+                  if (position_y !=5) break
+                    new_x = 5
+                    break;
+                case 'west':
+                    if (position_x != 1 && position_x != 5) break;
+                     new_y = Math.max(1, position_y - 1);
+                    break;
+                case 'east':
+                    if (position_x != 1 && position_x != 5) break;
+                    new_y = Math.min(matrixSize, position_y + 1);
+                    break;
+            }
+
+            if (canMoveTo(new_x, new_y)) {
+                position_x = new_x;
+                position_y = new_y;
+
+                if (position_x === 1 && position_y === 1) {
+                    sairLab(); // Sai do laboratório se chegar na posição (1,1)
+                    return;
+                }
+
+                updateMapImage();
+                updateMatrix();
+                updateCoordinates();
+                updateStatus();
+                updateBagagemDisplay();
+            }
+
+            // Verifica se o jogador morreu
+            if (ox === 0 || power === 0) {
+                showDeathPopup();
+            }
+            checkItemAvailability();
+        }
+
+
+        function pegarItem() {
+            if (bagagem.length < 3) {
+                const item = prompt("Qual item você deseja pegar?");
+                if (item) {
+                    bagagem.push(item);
+                    updateBagagemDisplay();
+                    hasItem = false;
+                    checkItemAvailability() // Desabilita o botão "Pegar Item"
+                }
+            } else {
+                alert("Sua bagagem está cheia!");
+            }
+        }
+
+        function showDropPopup() {
+            const dropItemSelect = document.getElementById("drop-item-select");
+            dropItemSelect.innerHTML = "";
+
+            if (bagagem.length === 0) {
+                alert("Sua bagagem está vazia!");
+                return;
+            }
+
+            bagagem.forEach((item, index) => {
+                const option = document.createElement("option");
+                option.value = index;
+                option.text = item;
+                dropItemSelect.add(option);
+            });
+
+            document.getElementById("drop-popup").style.display = "block";
+        }
+
+        function dropItem() {
+            const dropItemSelect = document.getElementById("drop-item-select");
+            const selectedIndex = dropItemSelect.value;
+
+            if (selectedIndex >= 0 && selectedIndex < bagagem.length) {
+                bagagem.splice(selectedIndex, 1);
+                updateBagagemDisplay();
+                hasItem = true;
+                checkItemAvailability();
+            }
+
+            closeDropPopup();
+        }
+
+        function closeDropPopup() {
+            document.getElementById('drop-popup').style.display = 'none';
+        }
+
+        function checkItemAvailability() {
+            const pegarItemButton = document.getElementById('pick-button');
+            const largarItemButton = document.getElementById('drop-item-button');
+
+            pegarItemButton.disabled = hasItem || bagagem.length >= 3;
+            largarItemButton.disabled = !hasItem;
+        }
+
+        function sairLab() {
+            window.location.href = `scape.html?ox=${ox}&power=${power}&bagagem=${JSON.stringify(bagagem)}&position_x=9&position_y=27&from=lab`;
+        }
+
+        // Inicialização
+        window.onload = function() {
+            getUrlParameters();
+            createMatrix();
+            updateMapImage();
+            updateMatrix();
+            updateCoordinates();
+            updateStatus();
+            updateBagagemDisplay();
+            checkItemAvailability();
+
+            document.getElementById('north-button').addEventListener('click', () => movePlayer('north'));
+            document.getElementById('south-button').addEventListener('click', () => movePlayer('south'));
+            document.getElementById('west-button').addEventListener('click', () => movePlayer('west'));
+            document.getElementById('east-button').addEventListener('click', () => movePlayer('east'));
+            document.getElementById('pick-button').addEventListener('click', () => pegarItem());
+            document.getElementById('drop-button').addEventListener('click', () => showDropPopup());
+            document.getElementById('drop-confirm-button').addEventListener('click', () => dropItem());
+            document.getElementById('drop-cancel-button').addEventListener('click', () => closeDropPopup());
+        };
+    </script>
+
+</body>
+</html>

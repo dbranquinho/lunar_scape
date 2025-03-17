@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lunar Scape - Bunker</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Estilos */
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #map-row {
+            display: flex;
+            width: 100%;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        #map-image-container {
+            width: 30%;
+            text-align: center;
+        }
+
+        #map-image {
+            max-width: 100%;
+            height: auto;
+        }
+
+        #matrix-container {
+            display: grid;
+            grid-template-columns: repeat(10, 10px); /* Matriz 10x10 */
+            width: 100px;
+            height: 100px;
+        }
+
+        .matrix-cell {
+            width: 10px;
+            height: 10px;
+            border: 1px solid #333;
+        }
+
+        .player-position {
+            background-color: red !important; /* Sobrescreve a cor cinza claro */
+            z-index: 2; /* Garante que fique na frente das outras cores */
+        }
+
+        .valid-position {
+            background-color: lightgray; /* Coordenadas válidas */
+            z-index: 1; /* Garante que as áreas válidas fiquem atrás */
+        }
+
+          .exit-position {
+            background-color: yellow !important;
+            z-index: 0;
+        }
+
+        #coordinates-container {
+            width: 30%;
+            text-align: center;
+            display: flex;
+            flex-direction: column; /* Alinha elementos verticalmente */
+            justify-content: center;
+            align-items: center;
+        }
+
+        #bagagem-list {
+            list-style: none; /* Remove marcadores de lista */
+            padding: 0;
+        }
+
+        #controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .control-row button {
+            margin: 0 10px;
+            padding: 8px 16px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        #status {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #death-popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            text-align: center;
+            color: white;
+        }
+
+        #death-popup-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #death-image {
+            max-width: 80%;
+            max-height: 60%;
+        }
+
+        #drop-popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1001;
+            text-align: center;
+            color: white;
+        }
+
+        #drop-popup-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #333;
+            padding: 20px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Lunar Scape - Bunker</h1>
+
+    <div id="game-container">
+        <div id="map-row">
+            <div id="map-image-container">
+                <img id="map-image" src="" alt="Mapa">
+            </div>
+            <div id="matrix-container">
+                <!-- A matriz será preenchida com JavaScript -->
+            </div>
+            <div id="coordinates-container">
+                <p id="coordinates">Coordenadas (x, y)</p>
+                <h3>Bagagem:</h3>
+                <ul id="bagagem-list"></ul>
+            </div>
+        </div>
+
+        <div id="controls">
+            <div class="control-row">
+                <div></div>
+                <button id="north-button" onclick="movePlayer('north')">Norte</button>
+                <div></div>
+            </div>
+            <div class="control-row">
+                <button id="west-button" onclick="movePlayer('west')">Oeste</button>
+                <div></div>
+                <button id="east-button" onclick="movePlayer('east')">Leste</button>
+            </div>
+            <div class="control-row">
+                <button id="pick-button" onclick="pegarItem()">Pegar Item</button>
+                <button id="south-button" onclick="movePlayer('south')">Sul</button>
+                <button id="drop-button" id="drop-item-button" onclick="showDropPopup()">Largar Item</button>
+            </div>
+        </div>
+
+        <div id="status">
+            <p>Oxigênio: <span id="ox-level">100%</span></p>
+            <p>Energia: <span id="power-level">100%</span></p>
+        </div>
+    </div>
+
+    <!-- Pop-up de Morte -->
+    <div id="death-popup">
+        <div id="death-popup-content">
+            <h2>Você Morreu!</h2>
+            <img id="death-image" src="images/dead.jpeg" alt="Você Morreu">
+            <p>Seus recursos se esgotaram.</p>
+        </div>
+    </div>
+
+    <!-- Pop-up de Descarte -->
+    <div id="drop-popup">
+        <div id="drop-popup-content">
+            <h2>Qual item deseja descartar?</h2>
+            <select id="drop-item-select"></select>
+            <button id="drop-confirm-button" onclick="dropItem()">OK</button>
+            <button id="drop-cancel-button" onclick="closeDropPopup()">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        // Variáveis Globais
+        let ox = 100;
+        let power = 100;
+        let position_x = 1;
+        let position_y = 1;
+        const matrixSize = 10;
+        let matrix = [];
+        let bagagem = [];
+        let fromPage = 'scape';
+        let hasItem = false; // Variável para controlar se a célula tem um item
+
+        // Obtém os parâmetros da URL
+        function getUrlParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            ox = parseFloat(urlParams.get('ox')) || 100;
+            power = parseFloat(urlParams.get('power')) || 100;
+            try {
+                bagagem = JSON.parse(urlParams.get('bagagem')) || [];
+            } catch (e) {
+                bagagem = [];
+                console.error("Erro ao analisar a bagagem da URL:", e);
+            }
+           position_x = parseFloat(urlParams.get('position_x')) || 1;
+            position_y = parseFloat(urlParams.get('position_y')) || 1;
+            fromPage = urlParams.get('from') || 'scape';
+        }
+
+        // Funções Utilitárias
+        function updateStatus() {
+            document.getElementById('ox-level').textContent = ox.toFixed(1) + '%';
+            document.getElementById('power-level').textContent = power.toFixed(1) + '%';
+        }
+
+         function updateMapImage() {
+            let imagePath = `images/bunker_${position_x}x${position_y}.jpeg`;
+            const imgElement = document.getElementById('map-image');
+
+            function imageExists(url, callback) {
+                let img = new Image();
+                img.onload = function() { callback(true); };
+                img.onerror = function() { callback(false); };
+                img.src = url;
+            }
+
+            imageExists(imagePath, function(exists) {
+                if (exists) {
+                    imgElement.src = imagePath;
+                } else {
+                    imgElement.src = 'images/bunker_1x1.jpeg'; // Imagem padrão
+                }
+            });
+        }
+
+        function updateCoordinates() {
+            document.getElementById('coordinates').textContent = `Coordenadas (${position_x}, ${position_y})`;
+        }
+
+        function updateBagagemDisplay() {
+            const bagagemList = document.getElementById('bagagem-list');
+            bagagemList.innerHTML = '';
+            bagagem.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                bagagemList.appendChild(li);
+            });
+        }
+
+        function createMatrix() {
+            const matrixContainer = document.getElementById('matrix-container');
+            for (let y = 1; y <= matrixSize; y++) {
+                matrix[y] = [];
+                for (let x = 1; x <= matrixSize; x++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('matrix-cell');
+                    cell.dataset.x = x;
+                    cell.dataset.y = y;
+
+                    // Define classes para as posições válidas
+                    if ((y === 1 || y === 3 || y === 9) || (x === 3 || x === 7)) {
+                        cell.classList.add('valid-position');
+                    }
+                     if (x === 1 && y === 1) {
+                        cell.classList.add('exit-position');
+                    }
+
+
+                    matrixContainer.appendChild(cell);
+                    matrix[y][x] = cell;
+                }
+            }
+        }
+
+        function updateMatrix() {
+            for (let y = 1; y <= matrixSize; y++) {
+                for (let x = 1; x <= matrixSize; x++) {
+                    matrix[y][x].classList.remove('player-position');
+                }
+            }
+             matrix[position_y][position_x].classList.add('player-position');
+        }
+
+        function showDeathPopup() {
+            document.getElementById('death-popup').style.display = 'block';
+            setTimeout(function() {
+                window.location.href = 'index.html';
+            }, 3000);
+        }
+        function canMoveTo(x, y) {
+            // Verifica se a nova posição está dentro dos limites da matriz
+            if (x < 1 || x > matrixSize || y < 1 || y > matrixSize) {
+                return false;
+            }
+
+            // Verifica se a nova posição está nas linhas e colunas permitidas
+            if (!((y === 1 || y === 3 || y === 9) || (x === 3 || x === 7))) {
+                return false;
+            }
+
+            return true;
+        }
+
+        function movePlayer(direction) {
+            //Decaimento dos Recursos
+            ox -= 0.0;
+            power -= 1.0;
+            if (ox < 0) ox = 0;
+            if (power < 0) power = 0;
+            let new_x = position_x
+            let new_y = position_y
+
+            // Movimentação e Limites - Mantidos os mesmos
+            switch (direction) {
+                case 'north':
+                    new_y = position_y - 1
+                    break;
+                case 'south':
+                    new_y = position_y + 1
+                    break;
+                case 'west':
+                    new_x = position_x - 1
+                    break;
+                case 'east':
+                    new_x = position_x + 1
+                    break;
+            }
+            if (!canMoveTo(new_x, new_y)) return
+            position_x = new_x
+            position_y = new_y
+            //console.log(`Nova posição: x=${position_x}, y=${position_y}`);
+             if (position_x === 1 && position_y === 1) {
+                sairBunker(); // Sai do bunker se chegar na posição (1,1)
+                return;
+            }
+            // Atualizações - Mantidos os mesmos
+            updateMapImage();
+            updateMatrix();
+            updateCoordinates();
+            updateStatus();
+            updateBagagemDisplay();
+
+            // Verifica se o jogador morreu
+            if (ox === 0 || power === 0) {
+                showDeathPopup();
+            }
+            checkItemAvailability();
+
+        }
+
+        function pegarItem() {
+            if (bagagem.length < 3) {
+                const item = prompt("Qual item você deseja pegar?");
+                if (item) {
+                    bagagem.push(item);
+                    updateBagagemDisplay();
+                    hasItem = false;
+                    checkItemAvailability() // Desabilita o botão "Pegar Item"
+                }
+            } else {
+                alert("Sua bagagem está cheia!");
+            }
+        }
+
+        function showDropPopup() {
+            const dropItemSelect = document.getElementById("drop-item-select");
+            dropItemSelect.innerHTML = "";
+
+            if (bagagem.length === 0) {
+                alert("Sua bagagem está vazia!");
+                return;
+            }
+
+            bagagem.forEach((item, index) => {
+                const option = document.createElement("option");
+                option.value = index;
+                option.text = item;
+                dropItemSelect.add(option);
+            });
+
+            document.getElementById("drop-popup").style.display = "block";
+        }
+
+        function dropItem() {
+            const dropItemSelect = document.getElementById("drop-item-select");
+            const selectedIndex = dropItemSelect.value;
+
+            if (selectedIndex >= 0 && selectedIndex < bagagem.length) {
+                bagagem.splice(selectedIndex, 1);
+                updateBagagemDisplay();
+                hasItem = true;
+                checkItemAvailability();
+            }
+
+            closeDropPopup();
+        }
+
+        function closeDropPopup() {
+            document.getElementById("drop-popup").style.display = "none";
+        }
+
+        function checkItemAvailability() {
+            const pegarItemButton = document.getElementById('pick-button');
+            const largarItemButton = document.getElementById('drop-item-button');
+
+            pegarItemButton.disabled = hasItem || bagagem.length >= 3;
+            largarItemButton.disabled = !hasItem;
+        }
+        function sairBunker() {
+            window.location.href = `scape.html?ox=${ox}&power=${power}&bagagem=${JSON.stringify(bagagem)}&position_x=5&position_y=5&from=bunker`;
+        }
+        // Inicialização
+        window.onload = function() {
+            getUrlParameters();
+            createMatrix();
+            updateMapImage();
+            updateMatrix();
+            updateCoordinates();
+            updateStatus();
+            updateBagagemDisplay();
+            checkItemAvailability();
+
+            // Event Listeners para os Botões - CORRIGIDO: Adicionei onclick aos botões
+
+        };
+    </script>
+
+</body>
+</html>

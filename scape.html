@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lunar Scape - Jogo</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        /* Estilos */
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #map-row {
+            display: flex;
+            width: 100%;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        #map-image-container {
+            width: 30%;
+            text-align: center;
+        }
+
+        #map-image {
+            max-width: 100%;
+            height: auto;
+        }
+
+        #matrix-container {
+            display: grid;
+            grid-template-columns: repeat(30, 10px);
+            width: 300px;
+            height: 300px;
+        }
+
+        .matrix-cell {
+            width: 10px;
+            height: 10px;
+            border: 1px solid #333;
+        }
+
+        .player-position {
+            background-color: red;
+        }
+
+        #coordinates-container {
+            width: 30%;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .control-row button {
+            margin: 0 10px;
+            padding: 8px 16px;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        #status {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #death-popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            text-align: center;
+            color: white;
+        }
+
+        #death-popup-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #death-image {
+            max-width: 80%;
+            max-height: 60%;
+        }
+
+        #drop-popup {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1001;
+            text-align: center;
+            color: white;
+        }
+
+        #drop-popup-content {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #333;
+            padding: 20px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Lunar Scape</h1>
+
+    <div id="game-container">
+        <div id="map-row">
+            <div id="map-image-container">
+                <img id="map-image" src="" alt="Mapa">
+            </div>
+            <div id="matrix-container">
+                <!-- A matriz será preenchida com JavaScript -->
+            </div>
+            <div id="coordinates-container">
+                <p id="coordinates">Coordenadas (x, y)</p>
+                <h3>Bagagem:</h3>
+                <ul id="bagagem-list">
+                </ul>
+            </div>
+        </div>
+
+        <div id="controls">
+            <div class="control-row">
+                <div></div>
+                <button id="north-button">Norte</button>
+                <div></div>
+            </div>
+            <div class="control-row">
+                <button id="west-button">Oeste</button>
+                <div></div>
+                <button id="east-button">Leste</button>
+            </div>
+            <div class="control-row">
+                <button id="pick-button">Pegar Item</button>
+                <button id="south-button">Sul</button>
+                <button id="drop-button">Largar Item</button>
+            </div>
+        </div>
+
+        <div id="status">
+            <p>Oxigênio: <span id="ox-level">100%</span></p>
+            <p>Energia: <span id="power-level">100%</span></p>
+        </div>
+    </div>
+
+    <!-- Pop-up de Morte -->
+    <div id="death-popup">
+        <div id="death-popup-content">
+            <h2>Você Morreu!</h2>
+            <img id="death-image" src="images/dead.jpg" alt="Você Morreu">
+            <p>Seus recursos se esgotaram.</p>
+        </div>
+    </div>
+
+    <!-- Pop-up de Descarte -->
+    <div id="drop-popup">
+        <div id="drop-popup-content">
+            <h2>Qual item deseja descartar?</h2>
+            <select id="drop-item-select"></select>
+            <button id="drop-confirm-button">OK</button>
+            <button id="drop-cancel-button">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        // Variáveis Globais
+        let ox = 100;
+        let power = 100;
+        let position_x = 15;
+        let position_y = 15;
+        const matrixSize = 30;
+        let matrix = [];
+        let bagagem = [];
+        let fromPage = 'index'; // Variável para rastrear a página de origem
+
+        // Obtém os parâmetros da URL
+        function getUrlParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            ox = parseFloat(urlParams.get('ox')) || 100;
+            power = parseFloat(urlParams.get('power')) || 100;
+            try {
+                bagagem = JSON.parse(urlParams.get('bagagem')) || [];
+            } catch (e) {
+                bagagem = [];
+                console.error("Erro ao analisar a bagagem da URL:", e);
+            }
+            position_x = parseFloat(urlParams.get('position_x')) || 15; // Obtém position_x
+            position_y = parseFloat(urlParams.get('position_y')) || 15; // Obtém position_y
+            fromPage = urlParams.get('from') || 'index'; // Obtém a página de origem
+        }
+        // Funções Utilitárias
+        function updateStatus() {
+            document.getElementById('ox-level').textContent = ox.toFixed(1) + '%';
+            document.getElementById('power-level').textContent = power.toFixed(1) + '%';
+        }
+
+        function updateMapImage() {
+            let imagePath = `images/scape_${position_x}x${position_y}.jpeg`;
+            const imgElement = document.getElementById('map-image');
+
+            function imageExists(url, callback) {
+                let img = new Image();
+                img.onload = function() { callback(true); };
+                img.onerror = function() { callback(false); };
+                img.src = url;
+            }
+
+            imageExists(imagePath, function(exists) {
+                if (exists) {
+                    imgElement.src = imagePath;
+                } else {
+                    imgElement.src = 'images/scape_14x13.jpeg';
+                }
+            });
+        }
+
+        function updateCoordinates() {
+            document.getElementById('coordinates').textContent = `Coordenadas (${position_x}, ${position_y})`;
+        }
+
+        function updateBagagemDisplay() {
+            const bagagemList = document.getElementById('bagagem-list');
+            bagagemList.innerHTML = '';
+            bagagem.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                bagagemList.appendChild(li);
+            });
+        }
+
+        function createMatrix() {
+            const matrixContainer = document.getElementById('matrix-container');
+            for (let y = 0; y < matrixSize; y++) {
+                matrix[y] = [];
+                for (let x = 0; x < matrixSize; x++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('matrix-cell');
+                    cell.dataset.x = x;
+                    cell.dataset.y = y;
+                    matrixContainer.appendChild(cell);
+                    matrix[y][x] = cell;
+                }
+            }
+        }
+
+        function updateMatrix() {
+            for (let y = 0; y < matrixSize; y++) {
+                for (let x = 0; x < matrixSize; x++) {
+                    matrix[y][x].classList.remove('player-position');
+                    if (x === 6 && y === 6) {
+                        matrix[y][x].style.backgroundColor = "lightgray";
+                    } else if (x === 9 && y === 27) {
+                        matrix[y][x].style.backgroundColor = "yellow";
+                    } else {
+                        matrix[y][x].style.backgroundColor = "";
+                    }
+                }
+            }
+            matrix[position_y][position_x].classList.add('player-position');
+        }
+
+        function showDeathPopup() {
+            document.getElementById('death-popup').style.display = 'block';
+            setTimeout(function() {
+                window.location.href = 'index.html';
+            }, 3000);
+        }
+
+        function movePlayer(direction) {
+            ox -= 2.5;
+            power -= 1.5;
+            if (ox < 0) ox = 0;
+            if (power < 0) power = 0;
+
+            let new_x = position_x;
+            let new_y = position_y;
+            switch (direction) {
+                case 'north':
+                    new_y = Math.max(0, position_y - 1);
+                    break;
+                case 'south':
+                    new_y = Math.min(matrixSize - 1, position_y + 1);
+                    break;
+                case 'west':
+                    new_x = Math.max(0, position_x - 1);
+                    break;
+                case 'east':
+                    new_x = Math.min(matrixSize - 1, position_x + 1);
+                    break;
+            }
+
+            if (new_x === 6 && new_y === 6) {
+                window.location.href = `bunker.html?ox=${ox}&power=${power}&bagagem=${JSON.stringify(bagagem)}&from=scape`;
+                return;
+            }
+            if (new_x === 9 && new_y === 27) {
+                window.location.href = `lab.html?ox=${ox}&power=${power}&bagagem=${JSON.stringify(bagagem)}&from=scape`;
+                return;
+            }
+
+            position_x = new_x;
+            position_y = new_y;
+
+            updateMapImage();
+            updateMatrix();
+            updateCoordinates();
+            updateStatus();
+            updateBagagemDisplay();
+
+            if (ox === 0 || power === 0) {
+                showDeathPopup();
+            }
+        }
+
+        function pegarItem() {
+            if (bagagem.length < 3) {
+                const item = prompt("Qual item você deseja pegar?");
+                if (item) {
+                    bagagem.push(item);
+                    updateBagagemDisplay();
+                }
+            } else {
+                alert("Sua bagagem está cheia!");
+            }
+        }
+
+        function showDropPopup() {
+            const dropItemSelect = document.getElementById("drop-item-select");
+            dropItemSelect.innerHTML = "";
+
+            if (bagagem.length === 0) {
+                alert("Sua bagagem está vazia!");
+                return;
+            }
+
+            bagagem.forEach((item, index) => {
+                const option = document.createElement("option");
+                option.value = index;
+                option.text = item;
+                dropItemSelect.add(option);
+            });
+
+            document.getElementById("drop-popup").style.display = "block";
+        }
+
+        function dropItem() {
+            const dropItemSelect = document.getElementById("drop-item-select");
+            const selectedIndex = dropItemSelect.value;
+
+            if (selectedIndex >= 0 && selectedIndex < bagagem.length) {
+                bagagem.splice(selectedIndex, 1);
+                updateBagagemDisplay();
+            }
+
+            closeDropPopup();
+        }
+
+        function closeDropPopup() {
+            document.getElementById("drop-popup").style.display = "none";
+        }
+
+        // Inicialização
+        window.onload = function() {
+            getUrlParameters();
+            createMatrix();
+            updateMapImage();
+            updateMatrix();
+            updateCoordinates();
+            updateStatus();
+            updateBagagemDisplay();
+
+            document.getElementById('north-button').addEventListener('click', () => movePlayer('north'));
+            document.getElementById('south-button').addEventListener('click', () => movePlayer('south'));
+            document.getElementById('west-button').addEventListener('click', () => movePlayer('west'));
+            document.getElementById('east-button').addEventListener('click', () => movePlayer('east'));
+            document.getElementById('pick-button').addEventListener('click', () => pegarItem());
+            document.getElementById('drop-button').addEventListener('click', () => showDropPopup());
+            document.getElementById('drop-confirm-button').addEventListener('click', () => dropItem());
+            document.getElementById('drop-cancel-button').addEventListener('click', () => closeDropPopup());
+        };
+    </script>
+
+</body>
+</html>

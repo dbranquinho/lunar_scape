@@ -1,0 +1,185 @@
+# Criando a imagem de fundo.
+Vamos criar o Jogo Lunar Scape.
+Crie uma imagem de fundo para uma página web com o tema do jogo.
+A imagem deve ter um astronauta em uma área lunar típica, crie a imagem realista.
+
+Vamos criar o Jogo Lunar Scape.
+vamos começar pela linguagem que vamos fazer o jogo.
+será html, Javascript, css ou qualquer outra linguagem que não precise de pacotes de instalação.
+
+# index.html
+A tela principal no arquivo index.html deverá ter a entrada do jogo
+A imagem inicial com o tema lunar scape, coloque essa e qualquer outras imagens no diretório images.
+O nome da imagem inicial então será "images/lunarscape_title.jpeg" deve ter 75% do tamanho original.
+No index.html para que ao clicar no botão de iniciar o jogo, uma nova página será carregada de nome scape.html
+Coloque esse botão no centro da tela, o botão deve ser o suficiente para o texto "Iniciar o Jogo".
+
+No lado direito da tela, insira um objeto que passe o texto de baixo para cima.
+vamos chamar esse objeto de console.
+A cor do texto é amarela e o fundo preto.
+O tamanho da console é de 20 caracteres de largura com 10 linhas de altura.
+A console deve ter um caracter de margens nos quatro lados, mas a área útil do texto continua a mesma, 20 caracteres por 10 linhas.
+Quando a ultima linha do texto desaparecer na parte superior da console, a primeira linha retorna a base da console.
+A console deve ficar em primeiro plano.
+
+O texto que vai ficar passando no objeto é o seguinte:
+Sua espaçonave caiu na 
+superfície da lua. Você 
+tem oxigênio e energia 
+limitados. Você precisa 
+encontrar o foguete que 
+está na estação de 
+lançamentos para poder
+retornar para a terra.
+
+Ah! Você está só!!!
+
+
+
+vamos fazer agora o arquivo scape.html, use recursos como javascript ou qualquer outra linguagem para web que consiga resolver os calculos e
+o comportamento desejado conforme descrito a seguir.
+
+Ao iniciar a execução do scape.html crie as seguintes variáveis:
+- ox com o valor de 100%
+- power com o valor de 100%
+- position_x
+- position_y
+- uma lista contendo 3 posições texto. essa lista será entendida como bagagem, inicialmente ela vem vazia.
+
+crie uma matriz de 30 x 30 que chamaremos de "mapa lunar" 
+onde o centro é o ponto (15,15) onde o sobrevivente do jogo vai sair de posição inícial.
+na primeira linha
+na primeira coluna coloque a imagem respectiva do ponto que é images/scape_15x15.jpeg
+reduza a imagem se necessário. 
+o nome da imagem em disco é a posição x e y no mapa lunar conforme o exemplo images/scape_15x15.jpeg. 
+faça isso para todas as imagens de posição dentro da matriz. 
+em caso de imagem inexistente use a imagem images/scape_14x13.jpeg para scape.html
+
+na segunda coluna mostre a matriz:
+use para cada célula do mapa alunar no máximo 10 pixels de largura e 10 pixels de altura.
+marque em cor vermelha a posição do sobrevivente no jogo, 
+que no caso inicial (15,15) para o mapa lunar
+
+na terceira coluna centralizando na horizontal e na vertical coloque as coordenadas no formato e texto igual a "Coordenadas (x,y)"
+nessa coluna ainda coloque:
+A bagagem, ela deve ser mostrada abaixo das coordenadas na tela saltando uma linha.
+O sobrevivente pode pegar coisas que ele encontrar até 3, pois é o limite da bagagem.
+substitua x e y pelos valores correspondentes das coordenadas position_x e position_y respectivamente.
+na segunda linha centralize as colunas as seguir
+primeira coluna coloque um botão "Oeste" na segunda coluna botão "Norte" na terceira coluna botão "Leste"
+na terceira linha a primera coluna coloque o botão "Pegar Item", 
+o sobrevivente vai clicar no botão pegar para tirar o item do local e colocar na bagagem, 
+a segunda coluna com o botão "Sul" e a terceira coluna com o botão "Largar Item", nesse caso, 
+um pop-up vai aparecer perguntando qual item será descartado, ele escolhe em uma lista e clica em ok, 
+o item sai da bagagem e fica na posição onde o sobrevivente está, se tiver um item no local, o botão "Largar Item" deve ficar desabilitado.
+AO clicar em qualquer botão 2.5 de oxigênio decai, 1.5 para energia.
+Ao clicar no botão norte subtrair de 1 em position_y e atualizar a imagem 
+Ao clicar no botão sul somar de 1 em position_y
+Ao clicar no botão oeste subtrair de 1 em position_x
+Ao clicar no botão leste somar de 1 em position_x
+
+Quando o oxigênio ou a energia chegar em zero, 
+mostre um pop-up dizendo que ele morreu com a imagem images/dead.jpeg e volte a página index.html automaticamente.
+
+a posição (6,6) no mapa lunar é a posição do bunker, a cor desse ponto no mapa lunar deve ser cinza claro.
+toda vez que o sobrevivente chegar nesse ponto ele será enviado para a página bunker.html
+toda vez que o sobrevivente sair do bunker, ou seja, sair da página bunker.html para scape.html, a sua posição será (5,5)
+
+# bunker.html
+vamos contruir agora o arquivo bunker.html
+Ao iniciar a execução do bunker.html as as seguintes variáveis deverão ser herdadas do index.html:
+- ox 
+- power 
+- bagagem.
+
+crie uma matriz de 10 x 10 que chamaremos de "mapa bunker" 
+onde o ponto (1,1) onde o sobrevivente do jogo vai sair de posição inícial.
+na primeira linha da página e
+na primeira coluna coloque a imagem respectiva do ponto que é images/bunker_1x1.jpeg
+reduza a imagem se necessário. 
+o nome da imagem em disco é a posição x e y no mapa lunar conforme o exemplo images/bunker_1x1.jpeg. 
+faça isso para todas as imagens de posição dentro da matriz. 
+em caso de imagem inexistente use a imagem images/bunker_1x1.jpeg para bunker.html
+
+na segunda coluna mostre a matriz:
+use para cada célula do mapa alunar no máximo 10 pixels de largura e 10 pixels de altura.
+marque em cor vermelha a posição do sobrevivente no mapa do bunker, essa cor deve sobresair das demais mostradas no mapa do bunker
+que no caso inicial (1,1) para o mapa bunker
+apenas as linhas 1 3 e 9 podem ser ocupadas pelo sobrevivente.
+apenas as colunas 3 e 7 podem ser ocupadas pelo sobrevivente.
+pinte essas coordenadas de cinza claro.
+
+na terceira coluna centralizando na horizontal e na vertical coloque as coordenadas no formato e texto igual a "Coordenadas (x,y)"
+nessa coluna ainda coloque:
+A bagagem, ela deve ser mostrada abaixo das coordenadas na tela saltando uma linha.
+O sobrevivente pode pegar coisas que ele encontrar até 3, pois é o limite da bagagem.
+substitua x e y pelos valores correspondentes das coordenadas position_x e position_y respectivamente.
+na segunda linha centralize as colunas as seguir
+primeira coluna coloque um botão "Oeste" na segunda coluna botão "Norte" na terceira coluna botão "Leste"
+na terceira linha a primera coluna coloque o botão "Pegar Item", 
+o sobrevivente vai clicar no botão pegar para tirar o item do local e colocar na bagagem, 
+a segunda coluna com o botão "Sul" e a terceira coluna com o botão "Largar Item", nesse caso, 
+um pop-up vai aparecer perguntando qual item será descartado, ele escolhe em uma lista e clica em ok, 
+o item sai da bagagem e fica na posição onde o sobrevivente está, se tiver um item no local, o botão "Largar Item" deve ficar desabilitado.
+AO clicar em qualquer botão 0.0 de oxigênio decai, 1.0 para energia.
+Ao clicar no botão norte subtrair de 1 em position_y e atualizar a imagem 
+Ao clicar no botão sul somar de 1 em position_y
+Ao clicar no botão oeste subtrair de 1 em position_x
+Ao clicar no botão leste somar de 1 em position_x
+
+Quando o oxigênio ou a energia chegar em zero, 
+mostre um pop-up dizendo que ele morreu com a imagem images/dead.jpeg e volte a página index.html automaticamente.
+
+a posição (1,1) no mapa bunker é a posição de saida do bunker para scape.html, a cor desse ponto no mapa lunar deve ser amarela.
+toda vez que o sobrevivente chegar nesse ponto ele será enviado para a página scape.html 
+preservando as variáveis ox, power, position_x, position_y e bagagem.
+
+
+# lab.html
+vamos contruir agora o arquivo lab.html do laboratório.
+Ao iniciar a execução do lab.html as as seguintes variáveis deverão ser herdadas do index.html:
+- ox 
+- power 
+- bagagem.
+
+crie uma matriz de 10 x 10 que chamaremos de "mapa lab" 
+onde o ponto (1,1) onde o sobrevivente do jogo vai sair de posição inícial.
+na primeira linha da página e
+na primeira coluna coloque a imagem respectiva do ponto que é images/lab_1x1.jpeg
+reduza a imagem se necessário. 
+o nome da imagem em disco é a posição x e y no mapa laboratório conforme o exemplo images/lab_1x1.jpeg. 
+faça isso para todas as imagens de posição dentro da matriz. 
+em caso de imagem inexistente use a imagem images/lab_1x1.jpeg para bunker.html
+
+na segunda coluna mostre a matriz:
+use para cada célula do mapa laboratório no máximo 10 pixels de largura e 10 pixels de altura.
+marque em cor vermelha a posição do sobrevivente no mapa do laboratório, essa cor deve sobresair das demais mostradas no mapa do laboratório
+que no caso inicial (1,1) para o mapa laboratório
+apenas as linhas 1 e 5 podem ser ocupadas pelo sobrevivente.
+apenas as coluna 5 pode ser ocupada pelo sobrevivente.
+pinte essas coordenadas de cinza claro.
+
+na terceira coluna centralizando na horizontal e na vertical coloque as coordenadas no formato e texto igual a "Coordenadas (x,y)"
+nessa coluna ainda coloque:
+A bagagem, ela deve ser mostrada abaixo das coordenadas na tela saltando uma linha.
+O sobrevivente pode pegar coisas que ele encontrar até 3, pois é o limite da bagagem.
+substitua x e y pelos valores correspondentes das coordenadas position_x e position_y respectivamente.
+na segunda linha centralize as colunas as seguir
+primeira coluna coloque um botão "Oeste" na segunda coluna botão "Norte" na terceira coluna botão "Leste"
+na terceira linha a primera coluna coloque o botão "Pegar Item", 
+o sobrevivente vai clicar no botão pegar para tirar o item do local e colocar na bagagem, 
+a segunda coluna com o botão "Sul" e a terceira coluna com o botão "Largar Item", nesse caso, 
+um pop-up vai aparecer perguntando qual item será descartado, ele escolhe em uma lista e clica em ok, 
+o item sai da bagagem e fica na posição onde o sobrevivente está, se tiver um item no local, o botão "Largar Item" deve ficar desabilitado.
+AO clicar em qualquer botão 0.0 de oxigênio decai, 1.0 para energia.
+Ao clicar no botão norte subtrair de 1 em position_y e atualizar a imagem 
+Ao clicar no botão sul somar de 1 em position_y
+Ao clicar no botão oeste subtrair de 1 em position_x
+Ao clicar no botão leste somar de 1 em position_x
+
+Quando o oxigênio ou a energia chegar em zero, 
+mostre um pop-up dizendo que ele morreu com a imagem images/dead.jpeg e volte a página index.html automaticamente.
+
+a posição (1,1) no mapa laboratório é a posição de saida do laboratório para scape.html, a cor desse ponto no mapa laboratório deve ser amarela.
+toda vez que o sobrevivente chegar nesse ponto ele será enviado para a página scape.html 
+preservando as variáveis ox, power, position_x igual , position_y e bagagem.

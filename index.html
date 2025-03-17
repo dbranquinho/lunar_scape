@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lunar Scape</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        body {
+            background-image: url('images/lunar_background.jpeg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            color: #eee;
+            font-family: monospace; /* Fonte de terminal */
+            display: flex;
+            justify-content: center; /* Alinha horizontalmente */
+            align-items: center;     /* Alinha verticalmente */
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        #game-container {
+            text-align: center;
+            position: relative;
+            width: 70%; /* Reduz a largura para dar espaço ao console */
+            height: 100vh;
+            z-index: 1; /* Garante que fique atrás do botão */
+        }
+
+        #title-image {
+            width: 75%;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        #start-button {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            position: fixed; /* Fixa o botão na tela */
+            top: 61%;          /* Centraliza verticalmente */
+            left: 61%;         /* Centraliza horizontalmente */
+            transform: translate(-50%, -50%); /* Ajusta o posicionamento */
+            z-index: 2;       /* Garante que fique na frente de tudo */
+            min-width: 150px; /* Largura mínima do botão */
+            text-align: center; /* Centraliza o texto */
+        }
+
+        #start-button:hover {
+            background-color: #3e8e41;
+        }
+
+        #console-container {
+            width: 300px; /* Largura total do console */
+            height: 220px; /* Altura total do console */
+            position: absolute;
+            top: 50%;
+            right: 10%;
+            transform: translateY(-50%);
+            background-color: black;
+            color: yellow;
+            font-family: monospace;
+            font-size: 16px;
+            overflow: hidden; /* Esconde o texto que sai do container */
+            text-align: left;
+            padding: 10px; /* Adiciona margem interna */
+            box-sizing: border-box; /* Inclui o padding na largura/altura */
+            border: 1px solid #333; /* Adiciona borda para visualização */
+            z-index: 3; /* Garante que a console fique em primeiro plano */
+        }
+
+        #console-text {
+            position: relative;
+            top: 200px; /* Inicia o texto fora da tela */
+            transition: top 15s linear; /* Animação de rolagem */
+            white-space: pre-line; /* Mantém as quebras de linha */
+            line-height: 1.2;    /* Ajusta o espaçamento entre as linhas */
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <img src="images/lunarscape_title.jpeg" alt="Lunar Scape" id="title-image">
+    </div>
+
+    <button id="start-button">Iniciar o Jogo</button>
+
+    <div id="console-container">
+        <div id="console-text">
+Sua espaçonave caiu na 
+superfície da lua. Você 
+tem oxigênio e energia 
+limitados. Você precisa 
+encontrar o foguete que 
+está na estação de 
+lançamentos para poder
+retornar para a terra.
+
+Ah! Você está só!!!
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('start-button').addEventListener('click', function() {
+            window.location.href = `scape.html?ox=100&power=100&bagagem=[]&from=index`;
+        });
+
+        // Animação do console
+        const consoleText = document.getElementById('console-text');
+        const consoleContainer = document.getElementById('console-container');
+        let animationTimeout;
+
+        function animateConsole() {
+            let textHeight = consoleText.offsetHeight;
+            let containerHeight = consoleContainer.offsetHeight;
+            // Limpa o timeout anterior, se existir
+            clearTimeout(animationTimeout);             
+
+            consoleText.style.transition = 'none';
+            consoleText.style.top = containerHeight + 'px'; // Reseta a posição
+
+            // Força um reflow para aplicar a mudança de posição (importante!)
+            void consoleText.offsetWidth;
+
+            consoleText.style.transition = 'top 10s linear'; // Garante a transição
+            consoleText.style.top = -textHeight + 'px'; // Move o texto para cima  
+
+            animationTimeout = setTimeout(() => { // Modifique esta linha
+                animateConsole();
+            }, 10000); // Tempo da animação (10 segundos)
+        }
+
+        // Inicia a animação quando a página carrega
+        window.onload = function() {
+            animateConsole();
+        };
+    </script>
+</body>
+</html>

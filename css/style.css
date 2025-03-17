@@ -1,0 +1,44 @@
+body {
+    background-color: #111; /* Fundo escuro */
+    color: #eee; /* Texto claro */
+    font-family: sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+#game-container {
+    text-align: center;
+    position: relative; /* Necessário para posicionar o botão */
+    width: 100%;  /* Garante que o contêiner ocupa toda a largura */
+    height: 100vh; /* Garante que o contêiner ocupa toda a altura */
+}
+
+#title-image {
+    width: 45%;    /* Define a largura para 75% */
+    height: auto;   /* Mantém a proporção original */
+    margin-bottom: 20px;
+    display: block;  /* Garante que a margem funcione corretamente */
+    margin-left: auto; /* Centraliza a imagem horizontalmente */
+    margin-right: auto;
+}
+
+#start-button {
+    padding: 10px 20px;
+    font-size: 1.2em;
+    background-color: #4CAF50; /* Verde */
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    position: absolute; /* Posicionamento absoluto */
+    bottom: 25%;      /* Alinhado à parte inferior */
+    right: 25%;         /* Alinhado à direita */
+    margin: 20px;    /* Margem para afastar das bordas */
+}
+
+#start-button:hover {
+    background-color: #3e8e41; /* Verde mais escuro */
+}
